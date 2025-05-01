@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
+import 'dart:async'; // Import for Timer
 
 // Entry point of the application
 void main() {
@@ -42,11 +43,11 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
   Size? _drawingAreaSize;
 
   // Scroll controller for the results area
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _resultsScrollController = ScrollController();
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Dispose the controller
+    _resultsScrollController.dispose(); // Dispose the controller
     super.dispose();
   }
 
@@ -107,6 +108,17 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
         _currentDrawingPoints = [];
         _currentLine = [];
       });
+
+      // Scroll to the end after the frame is built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_resultsScrollController.hasClients) {
+          _resultsScrollController.animateTo(
+            _resultsScrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     } else {
       // Optional: Show a message if the drawing area is empty
       ScaffoldMessenger.of(context).showSnackBar(
@@ -123,14 +135,11 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('无题'),
-        elevation: 2,
-      ),
+      appBar: AppBar(title: const Text('无题'), elevation: 2),
       body: Column(
         children: [
-            // 1. Result Display Area (Scrollable, Fixed Height)
-            Container(
+          // 1. Result Display Area (Scrollable, Fixed Height)
+          Container(
             height: 90.0, // Fixed height for approx. two lines + padding
             padding: const EdgeInsets.all(16.0),
             margin: const EdgeInsets.all(10.0),
@@ -139,23 +148,23 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8.0),
               boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withAlpha(
-                (255 * 0.1).round(),
-                ), // 0.1 opacity
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
+                BoxShadow(
+                  color: Colors.grey.withAlpha(
+                    (255 * 0.1).round(),
+                  ), // 0.1 opacity
+                  spreadRadius: 1,
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
+                ),
               ],
             ),
             alignment: Alignment.topLeft, // Align items to the top-left
-            child: SingleChildScrollView( // Make the content scrollable
-              controller: _scrollController, // Assign the controller
+            child: SingleChildScrollView(
+              controller: _resultsScrollController, // Assign the controller
               child: Wrap(
-              spacing: 6.0, // Horizontal spacing between characters
-              runSpacing: 6.0, // Vertical spacing between lines
-              children: _buildCompletedCharacterWidgets(),
+                spacing: 6.0, // Horizontal spacing between characters
+                runSpacing: 6.0, // Vertical spacing between lines
+                children: _buildCompletedCharacterWidgets(),
               ),
             ),
           ),
@@ -233,14 +242,14 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
               icon: const Icon(Icons.arrow_forward),
               label: const Text(''),
               style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 30,
-                vertical: 15,
-              ),
-              textStyle: const TextStyle(fontSize: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+                textStyle: const TextStyle(fontSize: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
               ),
             ),
           ),
