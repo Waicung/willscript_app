@@ -41,6 +41,15 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
   // Size of the drawing area (will be determined by LayoutBuilder)
   Size? _drawingAreaSize;
 
+  // Scroll controller for the results area
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose(); // Dispose the controller
+    super.dispose();
+  }
+
   // --- Gesture Handlers ---
 
   // Called when the user starts drawing
@@ -120,8 +129,9 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
       ),
       body: Column(
         children: [
-          // 1. Result Display Area
-          Container(
+            // 1. Result Display Area (Scrollable, Fixed Height)
+            Container(
+            height: 90.0, // Fixed height for approx. two lines + padding
             padding: const EdgeInsets.all(16.0),
             margin: const EdgeInsets.all(10.0),
             decoration: BoxDecoration(
@@ -129,24 +139,24 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8.0),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withAlpha(
-                    (255 * 0.1).round(),
-                  ), // 0.1 opacity
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
+              BoxShadow(
+                color: Colors.grey.withAlpha(
+                (255 * 0.1).round(),
+                ), // 0.1 opacity
+                spreadRadius: 1,
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
               ],
             ),
-            constraints: const BoxConstraints(
-              minHeight: 50,
-            ), // Ensure some height
             alignment: Alignment.topLeft, // Align items to the top-left
-            child: Wrap(
+            child: SingleChildScrollView( // Make the content scrollable
+              controller: _scrollController, // Assign the controller
+              child: Wrap(
               spacing: 6.0, // Horizontal spacing between characters
               runSpacing: 6.0, // Vertical spacing between lines
               children: _buildCompletedCharacterWidgets(),
+              ),
             ),
           ),
 
