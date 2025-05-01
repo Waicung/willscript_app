@@ -33,13 +33,10 @@ class CharacterInputScreen extends StatefulWidget {
 }
 
 class _CharacterInputScreenState extends State<CharacterInputScreen> {
-  // List to hold the points of the current line being drawn
-  List<Point> _currentLine = [];
-  // List to hold all lines (strokes) for the current character drawing
-  List<List<Point>> _currentDrawingPoints = [];
-  // List to hold the completed character drawings (as lists of strokes)
-  // Each inner list represents a character, composed of multiple strokes (lines)
-  final List<List<List<Point>>> _completedCharactersPoints = [];
+  // Use perfect_freehand's PointVector for stroke data
+  List<PointVector> _currentLine = [];
+  List<List<PointVector>> _currentDrawingPoints = [];
+  final List<List<List<PointVector>>> _completedCharactersPoints = [];
 
   // Size of the drawing area (will be determined by LayoutBuilder)
   Size? _drawingAreaSize;
@@ -48,59 +45,56 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
 
   // Called when the user starts drawing
   void _handlePanStart(DragStartDetails details) {
-    // Clear the previous line points
     _currentLine = [];
-    // Add the starting point, converting Offset to Point
-    final point = _getPointFromOffset(details.localPosition);
+    final point = _getPointVectorFromOffset(details.localPosition);
     if (point != null) {
       setState(() {
-        _currentLine.add(point);
+        _currentLine.add(point); // Add PointVector
       });
     }
   }
 
   // Called when the user drags their finger
   void _handlePanUpdate(DragUpdateDetails details) {
-    // Add the current point to the line
-    final point = _getPointFromOffset(details.localPosition);
+    final point = _getPointVectorFromOffset(details.localPosition);
     if (point != null) {
       setState(() {
-        _currentLine.add(point);
+        _currentLine.add(point); // Add PointVector
       });
     }
   }
 
   // Called when the user lifts their finger
   void _handlePanEnd(DragEndDetails details) {
-    // Add the completed line to the current drawing
     if (_currentLine.isNotEmpty) {
       setState(() {
-        _currentDrawingPoints.add(List.from(_currentLine)); // Add a copy
-        _currentLine = []; // Clear for the next line
+        // Add a copy of the List<PointVector>
+        _currentDrawingPoints.add(List<PointVector>.from(_currentLine));
+        _currentLine = [];
       });
     }
   }
 
-  // Helper to convert Flutter's Offset to perfect_freehand's Point
-  // Also adds pressure (optional, using 0.5 here for simplicity)
-  Point? _getPointFromOffset(Offset offset) {
-    if (_drawingAreaSize == null)
-      return null; // Avoid errors if size not set yet
-    // Clamp the offset to be within the bounds of the drawing area
+  // Helper to convert Flutter's Offset to perfect_freehand's PointVector
+  PointVector? _getPointVectorFromOffset(Offset offset) {
+    if (_drawingAreaSize == null) return null;
     final double dx = offset.dx.clamp(0.0, _drawingAreaSize!.width);
     final double dy = offset.dy.clamp(0.0, _drawingAreaSize!.height);
-    return Point(dx, dy, 0.5); // Using fixed pressure 0.5
+    // Use perfect_freehand's PointVector constructor (x, y, pressure)
+    return PointVector(dx, dy, 0.5); // Using fixed pressure 0.5
   }
 
   // --- Button Action ---
 
-  // Called when the "Next Character" button is pressed
   void _nextCharacter() {
     if (_currentDrawingPoints.isNotEmpty) {
       setState(() {
-        // Add the current drawing (list of lines/strokes) to completed characters
-        _completedCharactersPoints.add(List.from(_currentDrawingPoints));
-        // Clear the current drawing area
+        // Add a copy of List<List<PointVector>>
+        _completedCharactersPoints.add(
+          List<List<PointVector>>.from(
+            _currentDrawingPoints.map((line) => List<PointVector>.from(line)),
+          ),
+        );
         _currentDrawingPoints = [];
         _currentLine = [];
       });
@@ -136,7 +130,9 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
               borderRadius: BorderRadius.circular(8.0),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withAlpha(
+                    (255 * 0.1).round(),
+                  ), // 0.1 opacity
                   spreadRadius: 1,
                   blurRadius: 3,
                   offset: const Offset(0, 1),
@@ -191,7 +187,9 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
                         borderRadius: BorderRadius.circular(8.0),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
+                            color: Colors.grey.withAlpha(
+                              (255 * 0.2).round(),
+                            ), // 0.2 opacity
                             spreadRadius: 2,
                             blurRadius: 5,
                             offset: const Offset(0, 2),
@@ -273,40 +271,37 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
   }
 
   // Helper function to convert point lists to perfect_freehand stroke outlines
+  // Input types are now List<List<PointVector>> and List<PointVector>
   List<List<Offset>> _getStrokeOutlines(
-    List<List<Point>> lines,
-    List<Point> currentLine,
+    List<List<PointVector>> lines,
+    List<PointVector> currentLine,
   ) {
     final List<List<Offset>> strokeOutlines = [];
 
-    // Define the stroke options (simplified)
     final options = StrokeOptions(
       size: 6,
       thinning: 0.6,
       smoothing: 0.5,
       streamline: 0.5,
       simulatePressure: true,
-      // Removed taper and cap options for now to fix compilation
     );
 
-    // Process completed lines for the current drawing
     for (final line in lines) {
       if (line.isNotEmpty) {
         final strokeOutline = getStroke(
-          line,
-          options: options, // Pass simplified options object
+          line, // Pass List<PointVector>
+          options: options,
         );
-        strokeOutlines.add(strokeOutline);
+        strokeOutlines.add(strokeOutline); // Add List<Offset>
       }
     }
 
-    // Process the currently active line
     if (currentLine.isNotEmpty) {
       final strokeOutline = getStroke(
-        currentLine,
-        options: options, // Pass simplified options object
+        currentLine, // Pass List<PointVector>
+        options: options,
       );
-      strokeOutlines.add(strokeOutline);
+      strokeOutlines.add(strokeOutline); // Add List<Offset>
     }
 
     return strokeOutlines;
