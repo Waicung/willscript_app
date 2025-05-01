@@ -115,7 +115,7 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chinese Character Input'),
+        title: const Text('无题'),
         elevation: 2,
       ),
       body: Column(
@@ -218,19 +218,20 @@ class _CharacterInputScreenState extends State<CharacterInputScreen> {
           // 3. "Next Character" Button
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
+            child: ElevatedButton.icon(
               onPressed: _nextCharacter,
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text(''),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 15,
-                ),
-                textStyle: const TextStyle(fontSize: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 30,
+                vertical: 15,
               ),
-              child: const Text('Next Character'),
+              textStyle: const TextStyle(fontSize: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              ),
             ),
           ),
         ],
